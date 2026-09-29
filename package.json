@@ -1,6 +1,6 @@
 {
   "name": "sautocomplete-suggestion",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight, dependency-free grouped autocomplete suggestion input (Vanilla TS). Framework-agnostic with React, Vue and Angular wrappers.",
   "main": "dist/sautocomplete-suggestion.umd.js",
   "module": "dist/sautocomplete-suggestion.esm.js",
