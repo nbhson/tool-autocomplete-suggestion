@@ -9,7 +9,7 @@ All UI strings are in **English** by default and overridable via `locale`.
 [![npm version](https://img.shields.io/npm/v/sautocomplete-suggestion.svg)](https://www.npmjs.com/package/sautocomplete-suggestion)
 [![license](https://img.shields.io/npm/l/sautocomplete-suggestion.svg)](./LICENSE)
 
-![SAutocomplete Demo](./demo/screenshot.png)
+![SAutocomplete Demo](https://raw.githubusercontent.com/nbhson/tool-autocomplete-suggestion/main/demo/screenshot.png)
 
 ## Table of Contents
 
