@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAutocomplete Suggestion — E2E Test Page</title>
+  <link rel="stylesheet" href="../dist/styles.css" />
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f3f4f6; padding: 40px 20px; }
+    h1 { text-align: center; margin-bottom: 24px; }
+    #test-host { max-width: 800px; margin: 0 auto; }
+    #event-log { max-width: 800px; margin: 16px auto 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 12px; min-height: 40px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>E2E Test Page</h1>
+  <div id="test-host"></div>
+  <div id="event-log"></div>
+  <script src="../dist/sautocomplete-suggestion.umd.js"></script>
+  <script>
+    var logEl = document.getElementById('event-log');
+    function log(msg) {
+      logEl.textContent += (logEl.textContent ? '\n' : '') + msg;
+    }
+    window.autocomplete = SAutocomplete.createAutocomplete({
+      container: '#test-host',
+      items: [
+        { id: 'l1', group: 'Language', label: 'TypeScript' },
+        { id: 'l2', group: 'Language', label: 'Python' },
+        { id: 'f1', group: 'Framework', label: 'React' },
+        { id: 'f2', group: 'Framework', label: 'Vue' },
+        { id: 't1', group: 'Tool', label: 'Playwright' },
+        { id: 't2', group: 'Tool', label: 'Vite' }
+      ],
+      placeholder: 'Search here...',
+      history: ['TypeScript with React'],
+      onSubmit: function (q) { log('onSubmit: ' + q); },
+      onChange: function (q) { log('onChange: ' + q); },
+      onStageChange: function (s) { log('onStage: ' + s.map(function (x) { return x.label; }).join(',')); },
+      onFocus: function () { log('onFocus fired'); },
+      onBlur: function () { log('onBlur fired'); },
+      onReady: function () { log('onReady fired'); }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAutocomplete Suggestion — Demo</title>
+  <link rel="stylesheet" href="../dist/styles.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f3f4f6; color: #1f2937; padding: 40px 20px 80px; }
+    h1 { text-align: center; margin-bottom: 8px; }
+    p.subtitle { text-align: center; color: #6b7280; margin-bottom: 8px; }
+    .badges { text-align: center; margin-bottom: 28px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .badge { font-size: 12px; background: #fff; border: 1px solid #e5e7eb; border-radius: 999px; padding: 3px 12px; color: #4b5563; }
+    .badge b { color: #0f766e; }
+    .section { max-width: 860px; margin: 24px auto 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }
+    .section h2 { font-size: 16px; margin-bottom: 4px; }
+    .section p.desc { font-size: 13px; color: #6b7280; margin-bottom: 14px; }
+    .section p.desc kbd { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 0 6px; font-size: 11px; font-family: ui-monospace, monospace; }
+    #editor, #editor2, #editor3, #editor4 { width: 100%; }
+    .samples { display: flex; gap: 8px; overflow-x: auto; margin-top: 14px; padding-bottom: 4px; }
+    .samples button { flex-shrink: 0; border: 1px solid #e5e7eb; background: #fff; border-radius: 10px; padding: 7px 13px; font-size: 12px; cursor: pointer; color: #374151; }
+    .samples button:hover { border-color: #0d9488; background: #f0fdfa; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .btn { padding: 8px 16px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; cursor: pointer; background: #fff; color: #374151; transition: all .15s; }
+    .btn:hover { background: #f9fafb; border-color: #9ca3af; }
+    .btn-primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+    .btn-primary:hover { background: #115e59; }
+    .output { margin-top: 14px; }
+    .output h3 { font-size: 13px; color: #6b7280; margin-bottom: 8px; font-weight: 600; }
+    .output pre { background: #f9fafb; border: 1px solid #eef2f7; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12.5px; color: #374151; white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow-y: auto; min-height: 56px; }
+    .output code { background: #eef2ff; padding: 1px 6px; border-radius: 6px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+    .kbd-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    .kbd-table td { border-top: 1px solid #f3f4f6; padding: 7px 4px; color: #4b5563; }
+    .kbd-table kbd { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 4px; padding: 1px 7px; font-size: 11px; font-family: ui-monospace, monospace; }
+    footer { text-align: center; color: #9ca3af; font-size: 12px; margin-top: 32px; }
+    footer a { color: #0f766e; }
+  </style>
+</head>
+<body>
+  <h1>SAutocomplete Suggestion</h1>
+  <p class="subtitle">A lightweight, dependency-free grouped autocomplete input (Vanilla TypeScript)</p>
+  <div class="badges">
+    <span class="badge"><b>~17 KB</b> UMD+ESM</span>
+    <span class="badge"><b>0</b> runtime dependencies</span>
+    <span class="badge">React • Vue • Angular wrappers</span>
+    <span class="badge">MIT</span>
+  </div>
+
+  <!-- 1. Basic -->
+  <div class="section">
+    <h2>1. Basic — grouped search (tech stack)</h2>
+    <p class="desc">Type to filter groups. <kbd>Click</kbd>/<kbd>Space</kbd> stages items, <kbd>Enter</kbd> applies them to the input, <kbd>Enter</kbd> again submits. Try <b>typ</b>, <b>react</b>, <b>vite</b>.</p>
+    <div id="editor"></div>
+    <div class="samples" id="samples"></div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="submitMain()">Submit (Enter)</button>
+      <button class="btn" onclick="showQuery()">Get Query</button>
+      <button class="btn" onclick="showText()">Get Text</button>
+      <button class="btn" onclick="showEmpty()">Check if Empty</button>
+      <button class="btn" onclick="showCounts()">Word / Char Count</button>
+      <button class="btn" onclick="showStaged()">Get Staged</button>
+      <button class="btn" onclick="showHistory()">Get History</button>
+      <button class="btn" onclick="clearMain()">Clear</button>
+    </div>
+    <div class="output">
+      <h3>Output</h3>
+      <pre id="out">Click Submit or press Enter in the input. Submitted queries appear here.</pre>
+    </div>
+  </div>
+
+  <!-- 2. Dropup -->
+  <div class="section">
+    <h2>2. Dropup mode</h2>
+    <p class="desc">Same component with <code>dropup: true</code> — ideal for docked bottom search bars.</p>
+    <div id="editor2"></div>
+  </div>
+
+  <!-- 3. Custom domain -->
+  <div class="section">
+    <h2>3. Custom groups — any domain (movies)</h2>
+    <p class="desc">Data is fully pluggable. This instance uses completely different groups to prove the component is generic.</p>
+    <div id="editor3"></div>
+    <div class="output">
+      <h3>Submitted</h3>
+      <pre id="out3">—</pre>
+    </div>
+  </div>
+
+  <!-- 4. Custom color + submit icon + radius -->
+  <div class="section">
+    <h2>4. Custom color, submit icon &amp; border radius</h2>
+    <p class="desc">Pass <code>color</code> (any CSS color), <code>submitIcon</code> (inline SVG) and <code>borderRadius</code> (CSS radius or px) — the whole theme follows. Try the presets below.</p>
+    <div id="editor4"></div>
+    <div class="actions" style="align-items:center">
+      <label style="font-size:13px;color:#4b5563">Accent
+        <input type="color" id="accentPicker" value="#0f766e" oninput="restyle4(this.value, null)" style="vertical-align:middle" />
+      </label>
+      <button class="btn" onclick="restyle4('#0f766e', null)">Teal</button>
+      <button class="btn" onclick="restyle4('#4f46e5', null)">Indigo</button>
+      <button class="btn" onclick="restyle4('#e11d48', null)">Rose</button>
+      <button class="btn" onclick="restyle4('#d97706', null)">Amber</button>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="restyle4(null, ICONS.send)">Send icon</button>
+      <button class="btn" onclick="restyle4(null, ICONS.arrow)">Arrow icon</button>
+      <button class="btn" onclick="restyle4(null, ICONS.check)">Check icon</button>
+      <button class="btn" onclick="restyle4(null, ICONS.search)">Search icon</button>
+    </div>
+    <div class="actions" style="align-items:center">
+      <span style="font-size:13px;color:#4b5563">Radius</span>
+      <button class="btn" onclick="setRadius4(8)">8px</button>
+      <button class="btn" onclick="setRadius4(12)">12px</button>
+      <button class="btn" onclick="setRadius4(24)">24px (default)</button>
+      <button class="btn" onclick="setRadius4(999)">Pill</button>
+    </div>
+    <div class="output">
+      <h3>Submitted</h3>
+      <pre id="out4">—</pre>
+    </div>
+  </div>
+
+  <!-- 5. Events + keyboard -->
+  <div class="section">
+    <h2>5. Events log + keyboard shortcuts</h2>
+    <p class="desc">Every interaction on instance <b>#1</b> is logged below via <code>onChange / onStageChange / onSubmit</code>.</p>
+    <div class="output">
+      <h3>Event log</h3>
+      <pre id="log">—</pre>
+    </div>
+    <table class="kbd-table">
+      <tr><td><kbd>Tab</kbd> / <kbd>Shift+Tab</kbd></td><td>Move focus across suggestion chips</td></tr>
+      <tr><td><kbd>Space</kbd></td><td>Stage / unstage the focused chip (multi-select), advances focus</td></tr>
+      <tr><td><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></td><td>Navigate chips</td></tr>
+      <tr><td><kbd>Enter</kbd> (staged &gt; 0)</td><td>Apply staged items into the input (does not submit)</td></tr>
+      <tr><td><kbd>Enter</kbd> (chip focused)</td><td>Apply single chip into the input (does not submit)</td></tr>
+      <tr><td><kbd>Enter</kbd> (input)</td><td>Submit query</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Clear chip focus → clear staged → close dropdown</td></tr>
+    </table>
+    <div class="actions">
+      <button class="btn" onclick="toggleDisable()">Disable / Enable #1</button>
+      <button class="btn" onclick="recreate()">Destroy + Recreate #1</button>
+    </div>
+  </div>
+
+  <footer>SAutocomplete Suggestion • <a href="../README.md">README</a> • MIT License</footer>
+
+  <script src="../dist/sautocomplete-suggestion.umd.js"></script>
+  <script>
+    var items = [
+      { id: 'l1', group: 'Language', label: 'TypeScript' },
+      { id: 'l2', group: 'Language', label: 'JavaScript' },
+      { id: 'l3', group: 'Language', label: 'Python' },
+      { id: 'l4', group: 'Language', label: 'Go' },
+      { id: 'l5', group: 'Language', label: 'Rust' },
+      { id: 'f1', group: 'Framework', label: 'React' },
+      { id: 'f2', group: 'Framework', label: 'Vue' },
+      { id: 'f3', group: 'Framework', label: 'Angular' },
+      { id: 't1', group: 'Tool', label: 'Vite' },
+      { id: 't2', group: 'Tool', label: 'Vitest' },
+      { id: 't3', group: 'Tool', label: 'Playwright' },
+      { id: 'p1', group: 'Platform', label: 'Web' },
+      { id: 'p2', group: 'Platform', label: 'Node.js' },
+      { id: 'c1', group: 'License', label: 'MIT' },
+      { id: 'a1', group: 'Topic', label: 'Testing' },
+      { id: 'a2', group: 'Topic', label: 'Accessibility' }
+    ];
+    var out = document.getElementById('out');
+    var logEl = document.getElementById('log');
+    function log(msg) {
+      var line = new Date().toLocaleTimeString() + '  ' + msg;
+      logEl.textContent = logEl.textContent === '—' ? line : logEl.textContent + '\n' + line;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    var ed = SAutocomplete.createAutocomplete({
+      container: '#editor',
+      items: items,
+      placeholder: 'Search languages, frameworks, tools...',
+      history: ['TypeScript with React', 'Vite, Testing'],
+      onSubmit: function (q) { out.textContent = 'Submitted: ' + q; log('submit: ' + q); },
+      onChange: function (q) { log('change: ' + q); },
+      onStageChange: function (s) { log('stage: [' + s.map(function (x) { return x.label; }).join(', ') + ']'); },
+      onReady: function () { console.log('SAutocomplete #1 ready'); }
+    });
+
+    SAutocomplete.createAutocomplete({
+      container: '#editor2', items: items, dropup: true,
+      placeholder: 'Dropup mode — opens above the input...',
+      onSubmit: function (q) { alert('Dropup submitted: ' + q); }
+    });
+
+    SAutocomplete.createAutocomplete({
+      container: '#editor3',
+      items: [
+        { id: 'g1', group: 'Genre', label: 'Sci-Fi' },
+        { id: 'g2', group: 'Genre', label: 'Drama' },
+        { id: 'm1', group: 'Movie', label: 'Dune: Part Two' },
+        { id: 'm2', group: 'Movie', label: 'Oppenheimer' },
+        { id: 'd1', group: 'Director', label: 'Denis Villeneuve' },
+        { id: 'd2', group: 'Director', label: 'Christopher Nolan' }
+      ],
+      groupOrder: ['Genre', 'Movie', 'Director'],
+      placeholder: 'Search genres, movies, directors...',
+      onSubmit: function (q) { document.getElementById('out3').textContent = 'Submitted: ' + q; }
+    });
+
+    var samples = ['typ', 'react', 'vite', 'MIT', 'test', 'go'];
+    var box = document.getElementById('samples');
+    samples.forEach(function (s) {
+      var b = document.createElement('button');
+      b.textContent = s;
+      b.onclick = function () { ed.setQuery(s); };
+      box.appendChild(b);
+    });
+
+    var ICONS = {
+      send: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
+      arrow: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>',
+      check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+      search: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>'
+    };
+    var style4 = { color: '#0f766e', icon: ICONS.arrow, radius: 24 };
+    var ed4 = null;
+    function build4() {
+      if (ed4) { ed4.destroy(); }
+      ed4 = SAutocomplete.createAutocomplete({
+        container: '#editor4',
+        items: items,
+        color: style4.color,
+        submitIcon: style4.icon,
+        borderRadius: style4.radius,
+        placeholder: 'Themed instance — pick a color, icon and radius above...',
+        onSubmit: function (q) { document.getElementById('out4').textContent = 'Submitted: ' + q; }
+      });
+      ed4.setQuery('vite', { focus: false });
+    }
+    function restyle4(color, icon) {
+      if (color) {
+        style4.color = color;
+        document.getElementById('accentPicker').value = color;
+      }
+      if (icon) style4.icon = icon;
+      build4();
+    }
+    function setRadius4(r) {
+      style4.radius = r;
+      if (ed4) ed4.setBorderRadius(r);
+      else build4();
+    }
+    build4();
+
+    function esc(s) { return String(s).replace(/</g, '&lt;'); }
+    function submitMain() { ed.submit(); }
+    function showQuery() { out.textContent = 'Query: ' + ed.getQuery(); }
+    function showText() { out.textContent = 'Text: ' + ed.getText(); }
+    function showEmpty() { alert('Input is ' + (ed.isEmpty() ? 'empty' : 'not empty')); }
+    function showCounts() { out.textContent = 'Words: ' + ed.getWordCount() + ', Characters: ' + ed.getCharacterCount(); }
+    function showStaged() { out.textContent = 'Staged: ' + JSON.stringify(ed.getStaged(), null, 2); }
+    function showHistory() { out.textContent = 'History: ' + JSON.stringify(ed.getHistory(), null, 2); }
+    function clearMain() { ed.clear(); out.textContent = 'Cleared.'; }
+    var disabled = false;
+    function toggleDisable() {
+      disabled = !disabled;
+      disabled ? ed.disable() : ed.enable();
+      log(disabled ? 'disabled' : 'enabled');
+    }
+    function recreate() {
+      ed.destroy();
+      ed = SAutocomplete.createAutocomplete({
+        container: '#editor', items: items,
+        placeholder: 'Search languages, frameworks, tools...',
+        onSubmit: function (q) { out.textContent = 'Submitted: ' + q; log('submit: ' + q); },
+        onChange: function (q) { log('change: ' + q); },
+        onStageChange: function (s) { log('stage: [' + s.map(function (x) { return x.label; }).join(', ') + ']'); }
+      });
+      log('recreated');
+    }
+  </script>
+</body>
+</html>

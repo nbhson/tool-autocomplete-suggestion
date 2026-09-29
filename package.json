@@ -1,0 +1,70 @@
+{
+  "name": "sautocomplete-suggestion",
+  "version": "1.0.0",
+  "description": "A lightweight, dependency-free grouped autocomplete suggestion input (Vanilla TS). Framework-agnostic with React, Vue and Angular wrappers.",
+  "main": "dist/sautocomplete-suggestion.umd.js",
+  "module": "dist/sautocomplete-suggestion.esm.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist",
+    "frameworks",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/sautocomplete-suggestion.esm.js",
+      "require": "./dist/sautocomplete-suggestion.umd.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./dist/styles.css": "./dist/styles.css",
+    "./frameworks/*": "./frameworks/*"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "npx vitest run",
+    "test:watch": "npx vitest",
+    "test:unit": "npx vitest run",
+    "test:e2e": "npx playwright test",
+    "lint": "eslint src/",
+    "demo": "open demo/index.html",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "autocomplete",
+    "suggestion",
+    "grouped-suggestions",
+    "search-input",
+    "vanilla-js",
+    "lightweight",
+    "dependency-free",
+    "react",
+    "vue",
+    "angular"
+  ],
+  "author": "",
+  "license": "MIT",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "eslint": "^10.11.0",
+    "jsdom": "^29.1.1",
+    "rollup": "^4.9.0",
+    "rollup-plugin-css-only": "^4.5.2",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-postcss": "^4.0.2",
+    "tslib": "^2.8.1",
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^4.1.10"
+  }
+}
