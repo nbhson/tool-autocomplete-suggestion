@@ -1,15 +1,20 @@
 /**
- * SAutocomplete Suggestion — public types.
+ * SAutocomplete Suggestion — public types (enterprise edition).
  * All UI strings default to English and are overridable via `locale`.
+ * Generic payload `T` lets hosts attach domain data without casting.
  */
 
-export interface SuggestionItem {
+export interface SuggestionItem<T = unknown> {
   /** Unique id */
   id: string;
   /** Group name this item belongs to (e.g. "Language", "Framework") */
   group: string;
   /** Display label */
   label: string;
+  /** Optional domain payload (never rendered, passed back on select/submit) */
+  data?: T;
+  /** When true the item is not selectable (aria-disabled) */
+  disabled?: boolean;
 }
 
 export interface GroupConfig {
@@ -19,7 +24,7 @@ export interface GroupConfig {
   badgeBg?: string;
   badgeText?: string;
   badgeBorder?: string;
-  /** Optional inline SVG string for the group icon */
+  /** Optional inline SVG string for the group icon (sanitized before render) */
   icon?: string;
 }
 
@@ -32,34 +37,53 @@ export interface LocaleStrings {
   items?: string;
   apply?: string;
   done?: string;
+  /** @deprecated v1.2.0 — status bar no longer renders scope */
   scope?: string;
+  /** @deprecated v1.2.0 — unused */
   tier?: string;
   hits?: string;
+  /** @deprecated v1.2.0 — status bar no longer renders group counts */
   in?: string;
+  /** @deprecated v1.2.0 — status bar no longer renders group counts */
   groups?: string;
+  /** @deprecated v1.2.0 — status bar no longer renders the replacing pill */
   replacing?: string;
+  /** @deprecated v1.2.0 — status bar no longer renders keyboard hints */
   hintBrowse?: string;
+  /** @deprecated v1.2.0 — status bar no longer renders keyboard hints */
   hintMulti?: string;
+  /** @deprecated v1.2.0 — status bar no longer renders keyboard hints */
   hintApply?: string;
   noResults?: string;
+  /** Enterprise additions */
+  loading?: string;
+  loadError?: string;
+  retry?: string;
+  empty?: string;
+  showMore?: string;
 }
 
 export type MatchMode = 'accent-insensitive' | 'exact';
 export type DropdownPosition = 'bottom' | 'top';
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type DensityMode = 'comfortable' | 'compact';
+export type TextDirection = 'ltr' | 'rtl' | 'auto';
 
-export interface GroupedItem extends SuggestionItem {
+export interface GroupedItem<T = unknown> extends SuggestionItem<T> {
   globalIndex: number;
 }
 
-export interface MetadataGroup {
+export interface MetadataGroup<T = unknown> {
   type: string;
-  items: GroupedItem[];
+  items: GroupedItem<T>[];
 }
 
-export interface GroupedResult {
-  groups: MetadataGroup[];
-  allItems: GroupedItem[];
+export interface GroupedResult<T = unknown> {
+  groups: MetadataGroup<T>[];
+  allItems: GroupedItem<T>[];
   totalHits: number;
+  /** True when the list was truncated by virtualization/limits */
+  truncated?: boolean;
 }
 
 export interface HighlightRange {
@@ -69,7 +93,82 @@ export interface HighlightRange {
   isEntity: boolean;
 }
 
-export interface AutocompleteOptions {
+/** Async data provider — enterprise remote-search contract. */
+export interface DataSourceRequest {
+  /** Active word at the cursor (already trimmed) */
+  query: string;
+  /** Full input value */
+  fullQuery: string;
+  /** AbortSignal for cancellation (debounce / stale requests) */
+  signal: AbortSignal;
+}
+
+export type DataSourceFn<T = unknown> = (
+  req: DataSourceRequest,
+) => Promise<Array<SuggestionItem<T>>>;
+
+/** Pluggable history persistence (memory default, localStorage optional). */
+export interface HistoryAdapter {
+  load(): string[] | Promise<string[]>;
+  save(history: string[]): void | Promise<void>;
+  clear(): void | Promise<void>;
+}
+
+/** Minimal pluggable logger — defaults to no-op unless `debug: true`. */
+export interface Logger {
+  debug(...args: unknown[]): void;
+  info(...args: unknown[]): void;
+  warn(...args: unknown[]): void;
+  error(...args: unknown[]): void;
+}
+
+export interface SearchTelemetry {
+  query: string;
+  hits: number;
+  groups: number;
+  elapsedMs: number;
+  source: 'sync' | 'async' | 'cache';
+}
+
+export interface TelemetryEvents {
+  onSearch?: (info: SearchTelemetry) => void;
+  onSelect?: (item: SuggestionItem<unknown>) => void;
+  onError?: (err: unknown) => void;
+}
+
+export interface DesignTokens {
+  /** Force color scheme regardless of prefers-color-scheme */
+  theme?: ThemeMode;
+  /** Compact density for data-dense enterprise screens */
+  density?: DensityMode;
+  /** Text direction — 'auto' follows document.dir */
+  direction?: TextDirection;
+  /** Cap dropdown height (any CSS length, default 360px) */
+  maxDropdownHeight?: string | number;
+  /** Font stack for the whole component (sets --sa-font) */
+  fontFamily?: string;
+  /** Input font size, px number or any CSS length (sets --sa-font-size) */
+  fontSize?: string | number;
+  /** Surface background (sets --sa-bg) */
+  background?: string;
+  /** Primary text color (sets --sa-fg) */
+  foreground?: string;
+  /** Border color (sets --sa-border) */
+  borderColor?: string;
+  /** Secondary text color (sets --sa-muted) */
+  mutedColor?: string;
+  /** Dropdown panel radius, px number or any CSS radius (sets --sa-drop-radius) */
+  dropdownRadius?: string | number;
+  /** Dropdown panel shadow (sets --sa-shadow) */
+  shadow?: string;
+  /**
+   * Escape hatch — arbitrary CSS custom properties applied to the root.
+   * Keys may be `'--sa-foo'` or `'sa-foo'`. Invalid names are ignored.
+   */
+  cssVars?: Record<string, string>;
+}
+
+export interface AutocompleteOptions<T = unknown> {
   /** CSS selector or container element (required) */
   container: string | HTMLElement;
   /** Placeholder text (English default) */
@@ -77,7 +176,16 @@ export interface AutocompleteOptions {
   /** Initial query value */
   value?: string;
   /** Full dataset — assumed already available. Grouped by `group`. */
-  items?: SuggestionItem[];
+  items?: Array<SuggestionItem<T>>;
+  /**
+   * Async provider for remote datasets. When set, it takes precedence over
+   * `items` for suggestion filtering (sync items remain as fallback/known labels).
+   */
+  dataSource?: DataSourceFn<T>;
+  /** Debounce for async dataSource (ms, default 200). Sync path stays immediate. */
+  debounceMs?: number;
+  /** Cache async results by query string (default true) */
+  asyncCache?: boolean;
   /** Group ordering + theming. Defaults to order of first appearance. */
   groups?: GroupConfig[];
   /** Explicit group order override */
@@ -92,12 +200,22 @@ export interface AutocompleteOptions {
   maxHistory?: number;
   /** Initial history entries */
   history?: string[];
+  /** Pluggable history persistence. Defaults to in-memory. */
+  historyAdapter?: HistoryAdapter;
+  /** Storage key used by `createLocalStorageHistory()` (default 'sautocomplete:history') */
+  historyKey?: string;
   /** Accent-insensitive matching by default */
   matchMode?: MatchMode;
   /** Max items per group (0 = unlimited) */
   maxItemsPerGroup?: number;
   /** Max total items */
   maxTotalItems?: number;
+  /**
+   * Virtualization threshold — when total hits exceed this number only the
+   * first N items are rendered with a "show more" footer (default 200).
+   * Keeps DOM small for 10k+ row datasets.
+   */
+  virtualizeThreshold?: number;
   /** Show status bar (timing / hits / replacing) */
   showStatusBar?: boolean;
   /** Show recent history dropdown when input is empty */
@@ -106,7 +224,7 @@ export interface AutocompleteOptions {
   showApplyButton?: boolean;
   /** Extra CSS class on root */
   className?: string;
-  /** Custom submit button icon (inline SVG markup, trusted). Defaults to a send icon. */
+  /** Custom submit button icon (inline SVG markup, sanitized). Defaults to a send icon. */
   submitIcon?: string;
   /** Accent color for focus ring, submit button, staged chips and status (any CSS color). Default teal `#0f766e`. */
   color?: string;
@@ -114,6 +232,16 @@ export interface AutocompleteOptions {
   colorDark?: string;
   /** Border radius of the main input bar (any CSS radius or px number). Default `24px`. */
   borderRadius?: string | number;
+  /** Enterprise design tokens (theme / density / direction / height) */
+  tokens?: DesignTokens;
+  /** Native form integration — renders a hidden input so the query submits with <form> */
+  name?: string;
+  /** Separator used for the hidden form value when staged items exist (default ', ') */
+  formJoin?: string;
+  /** Enable verbose console logging (default false) */
+  debug?: boolean;
+  /** Custom logger (defaults to console when debug, no-op otherwise) */
+  logger?: Logger;
   /** English locale overrides */
   locale?: LocaleStrings;
   /** Callback on submit (Enter on input / Send button / history click) */
@@ -121,19 +249,25 @@ export interface AutocompleteOptions {
   /** Callback on every input change */
   onChange?: (query: string) => void;
   /** Callback when staged multi-select changes */
-  onStageChange?: (staged: SuggestionItem[]) => void;
+  onStageChange?: (staged: Array<SuggestionItem<T>>) => void;
   /** Callback on focus */
   onFocus?: () => void;
   /** Callback on blur */
   onBlur?: () => void;
   /** Callback when instance is ready */
-  onReady?: (instance: AutocompleteInstance) => void;
+  onReady?: (instance: AutocompleteInstance<T>) => void;
+  /** Enterprise telemetry hooks */
+  telemetry?: TelemetryEvents;
+  /** Fired when async dataSource rejects (also routed to telemetry.onError) */
+  onAsyncError?: (err: unknown) => void;
 }
 
-export interface AutocompleteInstance {
+export interface AutocompleteInstance<T = unknown> {
   getQuery(): string;
   /** Alias of getQuery() — plain text content (parity with rich-editor getText) */
   getText(): string;
+  /** Value serialized for native <form> (query + staged labels joined) */
+  getFormValue(): string;
   /** True when the query is empty / whitespace only */
   isEmpty(): boolean;
   /** Character count of the current query */
@@ -145,12 +279,16 @@ export interface AutocompleteInstance {
   focus(): void;
   blur(): void;
   submit(overrideQuery?: string): void;
-  getStaged(): SuggestionItem[];
+  /** Re-run the current query against the async dataSource (no-op for sync) */
+  reload(): void;
+  /** True while an async dataSource request is in flight */
+  isLoading(): boolean;
+  getStaged(): Array<SuggestionItem<T>>;
   clearStaged(): void;
   getHistory(): string[];
   clearHistory(): void;
-  setItems(items: SuggestionItem[]): void;
-  getItems(): SuggestionItem[];
+  setItems(items: Array<SuggestionItem<T>>): void;
+  getItems(): Array<SuggestionItem<T>>;
   setGroups(groups: GroupConfig[]): void;
   enable(): void;
   disable(): void;
@@ -159,6 +297,8 @@ export interface AutocompleteInstance {
   setDropup(v: boolean): void;
   /** Update main input border radius at runtime (any CSS radius or px number) */
   setBorderRadius(v: string | number): void;
+  /** Update accent theme at runtime */
+  setTheme(accent: string, dark?: string): void;
   getElement(): HTMLElement;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on(event: 'submit' | 'change' | 'stage' | 'focus' | 'blur', handler: (...args: any[]) => void): () => void;

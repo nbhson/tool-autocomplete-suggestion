@@ -1,7 +1,7 @@
 {
   "name": "sautocomplete-suggestion",
-  "version": "1.0.1",
-  "description": "A lightweight, dependency-free grouped autocomplete suggestion input (Vanilla TS). Framework-agnostic with React, Vue and Angular wrappers.",
+  "version": "1.2.0",
+  "description": "A lightweight, dependency-free grouped autocomplete suggestion input (Vanilla TS). Sync + async dataSource, virtualized, sanitized, form-ready. Framework-agnostic with React, Vue and Angular wrappers.",
   "main": "dist/sautocomplete-suggestion.umd.js",
   "module": "dist/sautocomplete-suggestion.esm.js",
   "types": "dist/types/index.d.ts",
@@ -9,7 +9,9 @@
     "dist",
     "frameworks",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {
@@ -18,7 +20,12 @@
       "types": "./dist/types/index.d.ts"
     },
     "./dist/styles.css": "./dist/styles.css",
-    "./frameworks/*": "./frameworks/*"
+    "./frameworks/*": "./frameworks/*",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "rollup -c",
@@ -26,8 +33,12 @@
     "test": "npx vitest run",
     "test:watch": "npx vitest",
     "test:unit": "npx vitest run",
+    "test:coverage": "npx vitest run --coverage",
     "test:e2e": "npx playwright test",
-    "lint": "eslint src/",
+    "test:e2e:chromium": "npx playwright test --project=chromium",
+    "bench": "npx vitest bench",
+    "lint": "eslint src/ frameworks/react.tsx",
+    "size": "node scripts/check-size.mjs",
     "demo": "open demo/index.html",
     "prepublishOnly": "npm run build"
   },
@@ -49,13 +60,14 @@
     "**/*.css"
   ],
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.3.0",
+    "@vitest/coverage-v8": "^4.0.0",
     "eslint": "^10.11.0",
     "jsdom": "^29.1.1",
     "rollup": "^4.9.0",

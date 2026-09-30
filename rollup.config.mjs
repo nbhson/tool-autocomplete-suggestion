@@ -2,9 +2,12 @@ import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
 import postcss from 'rollup-plugin-postcss';
 import dts from 'rollup-plugin-dts';
+import { readFileSync } from 'node:fs';
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
 const banner = `/*!
- * SAutocomplete Suggestion v1.0.0
+ * SAutocomplete Suggestion v${pkg.version}
  * A lightweight, dependency-free grouped autocomplete suggestion input
  * MIT License
  */`;

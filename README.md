@@ -6,6 +6,13 @@ Behavioral port of the Consent AI 4 main input — **without any AI**: the host 
 
 All UI strings are in **English** by default and overridable via `locale`.
 
+> **Enterprise edition (v1.2.0):** async `dataSource` (debounce + abort + cache),
+> virtualization, allowlist-sanitized icons, native form integration (`name` +
+> `getFormValue()`), generic `SuggestionItem<T>` payloads, pluggable history
+> adapters, logger + telemetry hooks, design tokens (theme/density/RTL/font/
+> surfaces/`cssVars`), minimal status bar, full keyboard nav + live regions.
+> Full guide: [`docs/ENTERPRISE.md`](./docs/ENTERPRISE.md).
+
 [![npm version](https://img.shields.io/npm/v/sautocomplete-suggestion.svg)](https://www.npmjs.com/package/sautocomplete-suggestion)
 [![license](https://img.shields.io/npm/l/sautocomplete-suggestion.svg)](./LICENSE)
 
@@ -48,7 +55,7 @@ All UI strings are in **English** by default and overridable via `locale`.
 - 🔍 **Accent-insensitive matching** + token matching (`cafe` matches `Café`)
 - 🖍️ **Active-word highlight** — mirrored underlay with amber highlight on the word/entity at the cursor
 - ✅ **Staged multi-select** — `Click`/`Space` stages chips, `Enter`/`Apply` commits to input, `Enter` again submits
-- 🎨 **Customizable** — accent `color` theme and `submitIcon` per instance
+- 🎨 **Customizable** — accent `color`, `submitIcon`, radii, fonts, surfaces and shadows via `tokens` + `cssVars` (full CSS-variable theming, no overrides needed)
 - ⌨️ **Full keyboard control** — `Tab` cycle, `Arrows` navigate, `Enter` commit/submit, `Esc` close
 - 🕘 **Recent history** — dropdown when input is empty (configurable, default 5)
 - ⬆️ **Dropup mode** — for docked bottom search bars
@@ -156,7 +163,19 @@ Creates a new autocomplete instance. Returns an `AutocompleteInstance`.
 | `maxItemsPerGroup` | `number` | `0` | Limit per group (`0` = unlimited) |
 | `maxTotalItems` | `number` | `0` | Limit total (`0` = unlimited) |
 | `matchMode` | `'accent-insensitive' \| 'exact'` | `'accent-insensitive'` | Matching mode |
-| `showStatusBar` | `boolean` | `true` | Timing / hits / replacing bar |
+| `dataSource` | `(req) => Promise<SuggestionItem[]>` | — | Async provider (`{ query, fullQuery, signal }`); takes precedence over `items` |
+| `debounceMs` | `number` | `200` | Debounce for `dataSource` (sync path stays immediate) |
+| `asyncCache` | `boolean` | `true` | Per-query FIFO cache for `dataSource` |
+| `showStatusBar` | `boolean` | `true` | Minimal status bar: hits count, staged pill, Apply button (timing only in `debug`) |
+| `virtualizeThreshold` | `number` | `200` | Render cap for large hit lists (`0` = off) |
+| `historyAdapter` | `HistoryAdapter` | memory | Pluggable history persistence (`createLocalStorageHistory()` available) |
+| `name` | `string` | — | Native form integration (renders a hidden input) |
+| `formJoin` | `string` | `', '` | Separator for the hidden form value |
+| `tokens` | `DesignTokens` | — | Theme/density/direction/fonts/surfaces/shadow + `cssVars` escape hatch |
+| `debug` | `boolean` | `false` | Verbose console logging + timing in status bar |
+| `logger` | `Logger` | — | Custom logger (`debug/info/warn/error`) |
+| `telemetry` | `{ onSearch, onSelect, onError }` | — | Observability hooks |
+| `onAsyncError` | `(err) => void` | — | Fired when `dataSource` rejects |
 | `showHistory` | `boolean` | `true` | Recent-history dropdown |
 | `showApplyButton` | `boolean` | `true` | Apply/Done button in dropdown |
 | `className` | `string` | `''` | Extra CSS class on root |
@@ -177,6 +196,9 @@ Creates a new autocomplete instance. Returns an `AutocompleteInstance`.
 |---|---|---|
 | `getQuery()` | `string` | Current query text |
 | `getText()` | `string` | Plain text content (alias of `getQuery`) |
+| `getFormValue()` | `string` | Query + staged labels serialized for `<form>` |
+| `reload()` | `void` | Re-run current query (refetches `dataSource`) |
+| `isLoading()` | `boolean` | Whether an async request is in flight |
 | `isEmpty()` | `boolean` | Whether the query is empty |
 | `getCharacterCount()` | `number` | Character count of the query |
 | `getWordCount()` | `number` | Word count of the query |
@@ -191,6 +213,7 @@ Creates a new autocomplete instance. Returns an `AutocompleteInstance`.
 | `enable()` / `disable()` / `isDisabled()` | `void` / `boolean` | Enabled state |
 | `setDropup(v)` | `void` | Switch dropdown direction at runtime |
 | `setBorderRadius(v)` | `void` | Update main input radius at runtime (`'12px'` or `12`) |
+| `setTheme(accent, dark?)` | `void` | Update accent theme at runtime |
 | `getElement()` | `HTMLElement` | Root element |
 | `on(evt, handler)` | `() => void` | Subscribe (`submit\|change\|stage\|focus\|blur`), returns unsubscribe |
 | `destroy()` | `void` | Remove instance + listeners |
@@ -276,6 +299,52 @@ editor.setBorderRadius('999px'); // pill
 </s-autocomplete-suggestion>
 ```
 
+### Design tokens & CSS variables (v1.2+)
+
+For deeper customization (fonts, surfaces, panel, shadows) use `tokens` — every
+key maps to a CSS variable on the instance root, so instances stay isolated:
+
+```ts
+createAutocomplete({
+  container: '#editor',
+  items,
+  tokens: {
+    theme: 'system',       // 'light' | 'dark' | 'system'
+    density: 'compact',    // 'comfortable' | 'compact'
+    direction: 'auto',     // 'ltr' | 'rtl' | 'auto'
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSize: 15,
+    background: '#ffffff',
+    foreground: '#1e293b',
+    borderColor: '#e2e8f0',
+    mutedColor: '#64748b',
+    dropdownRadius: 14,
+    maxDropdownHeight: 320,
+    shadow: '0 20px 50px rgba(15,23,42,.18)',
+    cssVars: { '--sa-chip-gap': '10px' }, // escape hatch for any variable below
+  },
+});
+```
+
+| Token | CSS variable | Default |
+|---|---|---|
+| `color` / `colorDark` | `--sa-accent` / `--sa-accent-dark` | `#0f766e` / derived |
+| `borderRadius` | `--sa-radius` | `24px` |
+| `tokens.fontFamily` | `--sa-font` | system stack |
+| `tokens.fontSize` | `--sa-font-size` | `15px` |
+| `tokens.background` | `--sa-bg` | `#ffffff` (`#0f172a` dark) |
+| `tokens.foreground` | `--sa-fg` | `#1e293b` (`#e2e8f0` dark) |
+| `tokens.borderColor` | `--sa-border` | `#e2e8f0` (`#1e293b` dark) |
+| `tokens.mutedColor` | `--sa-muted` | `#64748b` |
+| `tokens.dropdownRadius` | `--sa-drop-radius` | `16px` |
+| `tokens.maxDropdownHeight` | `--sa-drop-max` | `360px` |
+| `tokens.shadow` | `--sa-shadow` | `0 20px 50px rgba(15,23,42,.18)` |
+| density `compact` | `--sa-chip-gap`, `--sa-bar-min-h` | `6px`, `46px` |
+
+> The status bar is intentionally minimal (hits count + staged pill + Apply).
+> Timing (`ms`) appears only with `debug: true`; elapsed time is always
+> available via `telemetry.onSearch`.
+
 ## Locale (English by default)
 
 ```ts
@@ -287,11 +356,17 @@ createAutocomplete({
     apply: 'Apply',
     done: 'Done',
     hits: 'hits',
-    groups: 'groups',
-    replacing: 'replacing',
+    loading: 'Loading…',
+    loadError: 'Could not load suggestions',
+    retry: 'Retry',
+    empty: 'No matches — try another keyword',
   },
 });
 ```
+
+> The old status-bar strings (`scope`, `in`, `groups`, `replacing`,
+> `hintBrowse`, `hintMulti`, `hintApply`) are deprecated since v1.2.0 — the bar
+> is now minimal. They remain accepted for backward compatibility.
 
 ## Keyboard Shortcuts
 
@@ -300,6 +375,8 @@ createAutocomplete({
 | `Tab` / `Shift+Tab` | Move focus across suggestion chips |
 | `Space` | Stage / unstage focused chip (multi-select), advances focus |
 | `←` `→` `↑` `↓` | Navigate chips |
+| `Home` / `End` | Jump to first / last chip |
+| `PageUp` / `PageDown` | Jump 5 chips |
 | `Enter` (staged > 0) | Apply staged items into the input (does **not** submit) |
 | `Enter` (chip focused) | Apply single chip into the input (does **not** submit) |
 | `Enter` (on input) | Submit query |
@@ -316,11 +393,11 @@ createAutocomplete({
 
 | File | Size | Format |
 |---|---|---|
-| `sautocomplete-suggestion.umd.js` | ~17 KB | UMD (script tags, `SAutocomplete` global) |
-| `sautocomplete-suggestion.esm.js` | ~17 KB | ES Modules |
-| `styles.css` | ~6 KB | CSS |
+| `sautocomplete-suggestion.umd.js` | ~31 KB | UMD (script tags, `SAutocomplete` global) |
+| `sautocomplete-suggestion.esm.js` | ~30 KB | ES Modules |
+| `styles.css` | ~9 KB | CSS |
 
-**Total package: ~30 KB** · **Total runtime dependencies: 0.**
+**Total package: ~70 KB** (~39 KB served: pick ESM *or* UMD + CSS) · **Total runtime dependencies: 0.**
 
 ## Framework Integration
 

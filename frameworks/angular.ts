@@ -12,12 +12,21 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { createAutocomplete } from 'sautocomplete-suggestion';
-import type { AutocompleteInstance, GroupConfig, LocaleStrings, SuggestionItem } from 'sautocomplete-suggestion';
+import type {
+  AutocompleteInstance,
+  DesignTokens,
+  GroupConfig,
+  HistoryAdapter,
+  LocaleStrings,
+  MatchMode,
+  SuggestionItem,
+} from 'sautocomplete-suggestion';
 import 'sautocomplete-suggestion/dist/styles.css';
 
 /**
  * Fully dynamic Angular wrapper — every option is an @Input(),
- * every event is an @Output().
+ * every event is an @Output(). Enterprise edition: async dataSource,
+ * history adapter, design tokens, form name, virtualization.
  */
 @Component({
   selector: 's-autocomplete-suggestion',
@@ -26,13 +35,17 @@ import 'sautocomplete-suggestion/dist/styles.css';
   template: `<div #host style="width:100%"></div>`,
   styles: [`:host { display: block; width: 100%; }`],
 })
-export class SAutocompleteSuggestionComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class SAutocompleteSuggestionComponent<T = unknown>
+  implements AfterViewInit, OnChanges, OnDestroy
+{
   @ViewChild('host', { static: true }) host!: ElementRef<HTMLElement>;
 
   // ---- Dynamic config inputs ----
   @Input() placeholder = 'Search by keyword...';
   @Input() value = '';
-  @Input() items: SuggestionItem[] = [];
+  @Input() items: Array<SuggestionItem<T>> = [];
+  @Input() dataSource?: (req: { query: string; fullQuery: string; signal: AbortSignal }) => Promise<Array<SuggestionItem<T>>>;
+  @Input() debounceMs = 200;
   @Input() groups: GroupConfig[] = [];
   @Input() groupOrder: string[] = [];
   @Input() dropup = false;
@@ -40,8 +53,11 @@ export class SAutocompleteSuggestionComponent implements AfterViewInit, OnChange
   @Input() minChars = 1;
   @Input() maxHistory = 5;
   @Input() history: string[] = [];
+  @Input() historyAdapter?: HistoryAdapter;
+  @Input() matchMode: MatchMode = 'accent-insensitive';
   @Input() maxItemsPerGroup = 0;
   @Input() maxTotalItems = 0;
+  @Input() virtualizeThreshold = 200;
   @Input() showStatusBar = true;
   @Input() showHistory = true;
   @Input() showApplyButton = true;
@@ -51,23 +67,29 @@ export class SAutocompleteSuggestionComponent implements AfterViewInit, OnChange
   @Input() color?: string;
   @Input() colorDark?: string;
   @Input() borderRadius?: string | number;
+  @Input() tokens?: DesignTokens;
+  @Input() name?: string;
+  @Input() debug = false;
 
   // ---- Events ----
   @Output() querySubmit = new EventEmitter<string>();
   @Output() queryChange = new EventEmitter<string>();
-  @Output() stagedChange = new EventEmitter<SuggestionItem[]>();
+  @Output() stagedChange = new EventEmitter<Array<SuggestionItem<T>>>();
   @Output() focused = new EventEmitter<void>();
   @Output() blurred = new EventEmitter<void>();
-  @Output() ready = new EventEmitter<AutocompleteInstance>();
+  @Output() ready = new EventEmitter<AutocompleteInstance<T>>();
+  @Output() asyncError = new EventEmitter<unknown>();
 
-  private inst: AutocompleteInstance | null = null;
+  private inst: AutocompleteInstance<T> | null = null;
 
   ngAfterViewInit(): void {
-    this.inst = createAutocomplete({
+    this.inst = createAutocomplete<T>({
       container: this.host.nativeElement,
       placeholder: this.placeholder,
       value: this.value,
       items: this.items,
+      dataSource: this.dataSource,
+      debounceMs: this.debounceMs,
       groups: this.groups.length ? this.groups : undefined,
       groupOrder: this.groupOrder.length ? this.groupOrder : undefined,
       dropup: this.dropup,
@@ -75,8 +97,11 @@ export class SAutocompleteSuggestionComponent implements AfterViewInit, OnChange
       minChars: this.minChars,
       maxHistory: this.maxHistory,
       history: this.history,
+      historyAdapter: this.historyAdapter,
+      matchMode: this.matchMode,
       maxItemsPerGroup: this.maxItemsPerGroup,
       maxTotalItems: this.maxTotalItems,
+      virtualizeThreshold: this.virtualizeThreshold,
       showStatusBar: this.showStatusBar,
       showHistory: this.showHistory,
       showApplyButton: this.showApplyButton,
@@ -86,11 +111,15 @@ export class SAutocompleteSuggestionComponent implements AfterViewInit, OnChange
       color: this.color,
       colorDark: this.colorDark,
       borderRadius: this.borderRadius,
+      tokens: this.tokens,
+      name: this.name,
+      debug: this.debug,
       onSubmit: (q) => this.querySubmit.emit(q),
       onChange: (q) => this.queryChange.emit(q),
       onStageChange: (s) => this.stagedChange.emit(s),
       onFocus: () => this.focused.emit(),
       onBlur: () => this.blurred.emit(),
+      onAsyncError: (e) => this.asyncError.emit(e),
     });
     this.ready.emit(this.inst);
   }
@@ -100,20 +129,12 @@ export class SAutocompleteSuggestionComponent implements AfterViewInit, OnChange
     if (changes['items'] && this.items) this.inst.setItems(this.items);
     if (changes['groups'] && this.groups?.length) this.inst.setGroups(this.groups);
     if (changes['disabled']) (this.disabled ? this.inst.disable() : this.inst.enable());
-    if (changes['color']) {
-      if (this.color) this.inst.getElement().style.setProperty('--sa-accent', this.color);
-      else this.inst.getElement().style.removeProperty('--sa-accent');
-    }
-    if (changes['colorDark']) {
-      if (this.colorDark) this.inst.getElement().style.setProperty('--sa-accent-dark', this.colorDark);
-      else this.inst.getElement().style.removeProperty('--sa-accent-dark');
+    if (changes['dropup'] && this.dropup !== undefined) this.inst.setDropup(this.dropup);
+    if (changes['color'] || changes['colorDark']) {
+      if (this.color) this.inst.setTheme(this.color, this.colorDark);
     }
     if (changes['borderRadius'] && this.borderRadius !== undefined) {
       this.inst.setBorderRadius(this.borderRadius);
-    }
-    if (changes['submitIcon'] && this.submitIcon) {
-      const btn = this.inst.getElement().querySelector('.sa-submit');
-      if (btn) btn.innerHTML = this.submitIcon;
     }
     if (changes['value'] && this.value !== undefined) {
       if (this.inst.getQuery() !== this.value) this.inst.setQuery(this.value, { focus: false });
@@ -122,13 +143,16 @@ export class SAutocompleteSuggestionComponent implements AfterViewInit, OnChange
 
   getQuery(): string { return this.inst?.getQuery() ?? ''; }
   getText(): string { return this.inst?.getText() ?? ''; }
+  getFormValue(): string { return this.inst?.getFormValue() ?? ''; }
   isEmpty(): boolean { return this.inst?.isEmpty() ?? true; }
+  isLoading(): boolean { return this.inst?.isLoading() ?? false; }
   getCharacterCount(): number { return this.inst?.getCharacterCount() ?? 0; }
   getWordCount(): number { return this.inst?.getWordCount() ?? 0; }
   setQuery(v: string): void { this.inst?.setQuery(v); }
   clear(): void { this.inst?.clear(); }
   focus(): void { this.inst?.focus(); }
   submit(q?: string): void { this.inst?.submit(q); }
+  reload(): void { this.inst?.reload(); }
   setDropup(v: boolean): void { this.inst?.setDropup(v); }
   setBorderRadius(v: string | number): void { this.inst?.setBorderRadius(v); }
 
