@@ -2,6 +2,17 @@
 
 All notable changes are documented here. Releases follow [Conventional Commits](https://www.conventionalcommits.org/) + semantic-release.
 
+## [1.2.1]
+
+### Fixed
+- Restored the full status bar (scope, hits in groups, `replacing` pill,
+  keyboard hints, `Apply (N) Enter ↵` / `Done ↵`). Only the `ms` timing is
+  removed — it implied remote AI search while this library assumes local data.
+  Elapsed time remains available via `telemetry.onSearch`.
+- Reverted the v1.2.0 locale deprecation: `scope`, `in`, `groups`, `replacing`,
+  `hintBrowse`, `hintMulti`, `hintApply` are first-class keys again.
+- Refreshed `demo/screenshot.png`.
+
 ## [1.2.0]
 
 ### Changed (UI declutter)

@@ -6,11 +6,11 @@ Behavioral port of the Consent AI 4 main input — **without any AI**: the host 
 
 All UI strings are in **English** by default and overridable via `locale`.
 
-> **Enterprise edition (v1.2.0):** async `dataSource` (debounce + abort + cache),
+> **Enterprise edition (v1.2.1):** async `dataSource` (debounce + abort + cache),
 > virtualization, allowlist-sanitized icons, native form integration (`name` +
 > `getFormValue()`), generic `SuggestionItem<T>` payloads, pluggable history
 > adapters, logger + telemetry hooks, design tokens (theme/density/RTL/font/
-> surfaces/`cssVars`), minimal status bar, full keyboard nav + live regions.
+> surfaces/`cssVars`), full keyboard nav + live regions.
 > Full guide: [`docs/ENTERPRISE.md`](./docs/ENTERPRISE.md).
 
 [![npm version](https://img.shields.io/npm/v/sautocomplete-suggestion.svg)](https://www.npmjs.com/package/sautocomplete-suggestion)
@@ -166,7 +166,7 @@ Creates a new autocomplete instance. Returns an `AutocompleteInstance`.
 | `dataSource` | `(req) => Promise<SuggestionItem[]>` | — | Async provider (`{ query, fullQuery, signal }`); takes precedence over `items` |
 | `debounceMs` | `number` | `200` | Debounce for `dataSource` (sync path stays immediate) |
 | `asyncCache` | `boolean` | `true` | Per-query FIFO cache for `dataSource` |
-| `showStatusBar` | `boolean` | `true` | Minimal status bar: hits count, staged pill, Apply button (timing only in `debug`) |
+| `showStatusBar` | `boolean` | `true` | Status bar: scope, hits, replacing pill, staged pill, keyboard hints, Apply button |
 | `virtualizeThreshold` | `number` | `200` | Render cap for large hit lists (`0` = off) |
 | `historyAdapter` | `HistoryAdapter` | memory | Pluggable history persistence (`createLocalStorageHistory()` available) |
 | `name` | `string` | — | Native form integration (renders a hidden input) |
@@ -341,9 +341,10 @@ createAutocomplete({
 | `tokens.shadow` | `--sa-shadow` | `0 20px 50px rgba(15,23,42,.18)` |
 | density `compact` | `--sa-chip-gap`, `--sa-bar-min-h` | `6px`, `46px` |
 
-> The status bar is intentionally minimal (hits count + staged pill + Apply).
-> Timing (`ms`) appears only with `debug: true`; elapsed time is always
-> available via `telemetry.onSearch`.
+> The status bar shows scope, hits, the `replacing` pill, staged count,
+> keyboard hints and Apply — all overridable via `locale`. The `ms` timing was
+> removed in v1.2.1 (it implied remote AI search; this library assumes local
+> data) — elapsed time remains available via `telemetry.onSearch`.
 
 ## Locale (English by default)
 
@@ -356,6 +357,8 @@ createAutocomplete({
     apply: 'Apply',
     done: 'Done',
     hits: 'hits',
+    groups: 'groups',
+    replacing: 'replacing',
     loading: 'Loading…',
     loadError: 'Could not load suggestions',
     retry: 'Retry',
@@ -363,10 +366,6 @@ createAutocomplete({
   },
 });
 ```
-
-> The old status-bar strings (`scope`, `in`, `groups`, `replacing`,
-> `hintBrowse`, `hintMulti`, `hintApply`) are deprecated since v1.2.0 — the bar
-> is now minimal. They remain accepted for backward compatibility.
 
 ## Keyboard Shortcuts
 

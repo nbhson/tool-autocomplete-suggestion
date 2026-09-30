@@ -37,22 +37,14 @@ export interface LocaleStrings {
   items?: string;
   apply?: string;
   done?: string;
-  /** @deprecated v1.2.0 — status bar no longer renders scope */
   scope?: string;
-  /** @deprecated v1.2.0 — unused */
   tier?: string;
   hits?: string;
-  /** @deprecated v1.2.0 — status bar no longer renders group counts */
   in?: string;
-  /** @deprecated v1.2.0 — status bar no longer renders group counts */
   groups?: string;
-  /** @deprecated v1.2.0 — status bar no longer renders the replacing pill */
   replacing?: string;
-  /** @deprecated v1.2.0 — status bar no longer renders keyboard hints */
   hintBrowse?: string;
-  /** @deprecated v1.2.0 — status bar no longer renders keyboard hints */
   hintMulti?: string;
-  /** @deprecated v1.2.0 — status bar no longer renders keyboard hints */
   hintApply?: string;
   noResults?: string;
   /** Enterprise additions */

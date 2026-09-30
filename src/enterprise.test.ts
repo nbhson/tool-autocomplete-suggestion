@@ -171,7 +171,7 @@ describe('enterprise core', () => {
     inst.destroy();
   });
 
-  it('status bar is minimal: hits count only, no scope/ms/hints/replacing', () => {
+  it('status bar shows scope, hits, replacing pill and keyboard hints — but no ms timing', () => {
     const inst = createAutocomplete({
       container: '#host',
       items: [{ id: '1', group: 'Language', label: 'TypeScript' }],
@@ -179,24 +179,27 @@ describe('enterprise core', () => {
     inst.setQuery('typ', { focus: false });
     const status = document.querySelector('.sa-status') as HTMLElement;
     expect(status).toBeTruthy();
+    expect(status.textContent).toContain('scope');
+    expect(status.textContent).toContain('ALL');
     expect(status.textContent).toContain('hits');
-    expect(status.textContent).not.toContain('scope');
-    expect(status.textContent).not.toContain('ALL');
-    expect(status.textContent).not.toContain('replacing');
+    expect(status.textContent).toContain('replacing');
+    expect(status.querySelector('.sa-replacing')?.textContent).toBe('typ');
+    expect(status.querySelector('.sa-hint')).toBeTruthy();
+    expect(status.querySelector('.sa-apply')?.textContent).toContain('Done');
+    // ms timing is AI-search baggage (data is local) — never rendered
     expect(status.querySelector('.sa-ms')).toBeNull();
-    expect(status.querySelector('.sa-hint')).toBeNull();
-    expect(status.querySelector('.sa-apply')?.textContent).toContain('Apply');
+    expect(status.textContent).not.toMatch(/\d+\.\d+ ms/);
     inst.destroy();
   });
 
-  it('status bar shows timing only in debug mode', () => {
+  it('status bar never shows ms timing, even in debug mode', () => {
     const inst = createAutocomplete({
       container: '#host',
       items: [{ id: '1', group: 'Language', label: 'TypeScript' }],
       debug: true,
     });
     inst.setQuery('typ', { focus: false });
-    expect(document.querySelector('.sa-status .sa-ms')?.textContent).toMatch(/ms/);
+    expect(document.querySelector('.sa-status .sa-ms')).toBeNull();
     inst.destroy();
   });
 

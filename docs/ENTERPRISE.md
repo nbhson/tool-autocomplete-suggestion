@@ -103,10 +103,11 @@ table in `README.md`), so multiple themed instances coexist without global CSS.
 CSS honors `prefers-color-scheme`, `prefers-reduced-motion`, `forced-colors`
 (high contrast), and `:focus-visible` rings.
 
-The dropdown status bar is intentionally minimal: hits count + staged pill +
-Apply button. Verbose internals (`scope ALL`, per-group counts, replacing pill,
-keyboard hints, `ms` timing) were removed in v1.2.0 — timing shows only with
-`debug: true`, elapsed time always flows through `telemetry.onSearch`.
+The status bar keeps its full content — scope, hits in groups, `replacing`
+pill, staged pill, keyboard hints, Apply button — all overridable via `locale`.
+Only the `ms` timing was removed in v1.2.1: it implied remote AI search while
+this library assumes local data. Elapsed time still flows through
+`telemetry.onSearch`.
 
 ## 6. Security model
 

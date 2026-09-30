@@ -802,21 +802,23 @@ export function createAutocomplete<T = unknown>(options: AutocompleteOptions<T>)
       : grouped.groups;
 
     const stagedCount = staged.length;
-    const debugMode = !!options.debug;
     dropdownEl.hidden = false;
     dropdownEl.innerHTML = `
       <div class="sa-panel${wasOpen ? ' sa-no-anim' : ''}">
         ${showStatusBar ? `
         <div class="sa-status" role="status" aria-live="polite">
           <div class="sa-status-left">
-            <span class="sa-meta"><b>${grouped.totalHits}</b> ${esc(locale.hits)}</span>
+            <span class="sa-meta">${esc(locale.scope)} <b>ALL</b></span>
+            <span class="sa-meta">${esc(locale.hits)} <b>${grouped.totalHits}</b> ${esc(locale.in)} <b>${grouped.groups.length} ${esc(locale.groups)}</b></span>
+            ${qWord ? `<span class="sa-meta">${esc(locale.replacing)} <span class="sa-replacing">${esc(qWord)}</span></span>` : ''}
             ${stagedCount > 0 ? `<span class="sa-staged">✓ ${esc(locale.selected)}: ${stagedCount}</span>` : ''}
-            ${debugMode ? `<span class="sa-ms">${ms.toFixed(1)} ms</span>` : ''}
           </div>
-          ${showApplyButton ? `
           <div class="sa-status-right">
-            <button type="button" class="sa-apply${stagedCount > 0 ? ' sa-apply-active' : ''}" data-sa="apply">✓ ${stagedCount > 0 ? `${esc(locale.apply)} (${stagedCount})` : esc(locale.apply)}</button>
-          </div>` : ''}
+            ${stagedCount === 0 ? `
+              <span class="sa-hint"><kbd>Tab</kbd> ${esc(locale.hintBrowse)} • <kbd>Space</kbd> ${esc(locale.hintMulti)} • <kbd>Enter ↵</kbd> ${esc(locale.hintApply)}</span>
+            ` : ''}
+            ${showApplyButton ? `<button type="button" class="sa-apply${stagedCount > 0 ? ' sa-apply-active' : ''}" data-sa="apply">✓ ${stagedCount > 0 ? `${esc(locale.apply)} (${stagedCount}) Enter ↵` : esc(locale.done) + ' ↵'}</button>` : ''}
+          </div>
         </div>` : ''}
         <div class="sa-groups">
           ${visibleGroups.map((g) => {
