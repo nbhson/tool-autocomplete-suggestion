@@ -1,6 +1,5 @@
 import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
-import postcss from 'rollup-plugin-postcss';
 import dts from 'rollup-plugin-dts';
 import { readFileSync } from 'node:fs';
 
@@ -13,19 +12,6 @@ const banner = `/*!
  */`;
 
 export default [
-  // Build CSS
-  {
-    input: 'src/styles.css',
-    output: {
-      file: 'dist/styles.css',
-    },
-    plugins: [
-      postcss({
-        extract: 'styles.css',
-        minimize: true,
-      }),
-    ],
-  },
   // Build UMD and ESM bundles (dependency-free, no externals)
   {
     input: 'src/index.ts',
@@ -50,6 +36,7 @@ export default [
       typescript({
         tsconfig: './tsconfig.json',
         declaration: false,
+        declarationDir: null,
         sourceMap: true,
       }),
       terser(),
