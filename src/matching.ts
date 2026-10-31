@@ -109,7 +109,13 @@ export function getGroupedMetadata(
     const groupItems: GroupedItem[] = [];
     for (const m of limited) {
       if (opts.maxTotalItems && opts.maxTotalItems > 0 && allItems.length >= opts.maxTotalItems) break;
-      const item: GroupedItem = { id: m.id, group: m.group, label: m.label, globalIndex: globalCount };
+      const item: GroupedItem = {
+        id: m.id,
+        group: m.group,
+        label: m.label,
+        globalIndex: globalCount,
+        ...(m.disabled ? { disabled: true } : {}),
+      };
       globalCount++;
       allItems.push(item);
       groupItems.push(item);
