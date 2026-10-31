@@ -63,7 +63,7 @@ Works with plain `<form>`, React Hook Form, VeeValidate, Angular Forms
 Default is in-memory (GDPR-safe). Opt into persistence:
 
 ```ts
-import { createLocalStorageHistory } from 'sautocomplete-suggestion';
+import { createLocalStorageHistory } from '@nbhson43/s-autocomplete-suggestion';
 
 createAutocomplete({
   container: '#editor',

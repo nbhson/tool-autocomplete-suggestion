@@ -2,8 +2,8 @@
 // Requires @storybook/html (not a runtime dependency of this package).
 // npx storybook@latest init --type html, then drop this file into stories/.
 
-import { createAutocomplete } from 'sautocomplete-suggestion';
-import 'sautocomplete-suggestion/dist/styles.css';
+import { createAutocomplete } from '@nbhson43/s-autocomplete-suggestion';
+import '@nbhson43/s-autocomplete-suggestion/dist/styles.css';
 
 const items = [
   { id: 'l1', group: 'Language', label: 'TypeScript' },

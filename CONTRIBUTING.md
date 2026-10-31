@@ -9,8 +9,9 @@
 ```bash
 npm run lint
 npm run test
+npm run test:coverage   # thresholds: 80% lines/funcs, 75% branches
 npm run build && npm run size
-npm run test:e2e:chromium
+npm run test:e2e:chromium   # requires Playwright browsers installed
 ```
 
 ## Adding features

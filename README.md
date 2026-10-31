@@ -13,8 +13,8 @@ All UI strings are in **English** by default and overridable via `locale`.
 > surfaces/`cssVars`), full keyboard nav + live regions.
 > Full guide: [`docs/ENTERPRISE.md`](./docs/ENTERPRISE.md).
 
-[![npm version](https://img.shields.io/npm/v/sautocomplete-suggestion.svg)](https://www.npmjs.com/package/sautocomplete-suggestion)
-[![license](https://img.shields.io/npm/l/sautocomplete-suggestion.svg)](./LICENSE)
+[![npm version](https://img.shields.io/npm/v/@nbhson43/s-autocomplete-suggestion.svg)](https://www.npmjs.com/package/@nbhson43/s-autocomplete-suggestion)
+[![license](https://img.shields.io/npm/l/@nbhson43/s-autocomplete-suggestion.svg)](./LICENSE)
 
 ![SAutocomplete Demo](https://raw.githubusercontent.com/nbhson/tool-autocomplete-suggestion/main/demo/screenshot.png)
 
@@ -68,7 +68,7 @@ All UI strings are in **English** by default and overridable via `locale`.
 ## Installation
 
 ```bash
-npm install sautocomplete-suggestion
+npm install @nbhson43/s-autocomplete-suggestion
 ```
 
 ## Quick Start
@@ -76,8 +76,8 @@ npm install sautocomplete-suggestion
 ### Using ES Modules (Recommended)
 
 ```ts
-import { createAutocomplete } from 'sautocomplete-suggestion';
-import 'sautocomplete-suggestion/dist/styles.css';
+import { createAutocomplete } from '@nbhson43/s-autocomplete-suggestion';
+import '@nbhson43/s-autocomplete-suggestion/dist/styles.css';
 
 const editor = createAutocomplete({
   container: '#editor',
@@ -107,11 +107,11 @@ No installation needed — just add these to your HTML `<head>`:
 <head>
   <meta charset="UTF-8" />
   <title>My Page</title>
-  <link rel="stylesheet" href="https://unpkg.com/sautocomplete-suggestion/dist/styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/@nbhson43/s-autocomplete-suggestion/dist/styles.css" />
 </head>
 <body>
   <div id="editor"></div>
-  <script src="https://unpkg.com/sautocomplete-suggestion/dist/sautocomplete-suggestion.umd.js"></script>
+  <script src="https://unpkg.com/@nbhson43/s-autocomplete-suggestion/dist/sautocomplete-suggestion.umd.js"></script>
   <script>
     const editor = SAutocomplete.createAutocomplete({
       container: '#editor',
@@ -128,13 +128,13 @@ No installation needed — just add these to your HTML `<head>`:
 #### Option 2: Using importmap (modern browsers, no bundler)
 
 ```html
-<link rel="stylesheet" href="https://unpkg.com/sautocomplete-suggestion/dist/styles.css" />
+<link rel="stylesheet" href="https://unpkg.com/@nbhson43/s-autocomplete-suggestion/dist/styles.css" />
 <div id="editor"></div>
 <script type="importmap">
-{ "imports": { "sautocomplete-suggestion": "https://unpkg.com/sautocomplete-suggestion/dist/sautocomplete-suggestion.esm.js" } }
+{ "imports": { "@nbhson43/s-autocomplete-suggestion": "https://unpkg.com/@nbhson43/s-autocomplete-suggestion/dist/sautocomplete-suggestion.esm.js" } }
 </script>
 <script type="module">
-  import { createAutocomplete } from 'sautocomplete-suggestion';
+  import { createAutocomplete } from '@nbhson43/s-autocomplete-suggestion';
   createAutocomplete({ container: '#editor', items: [] });
 </script>
 ```
@@ -443,7 +443,7 @@ function onStage(s: unknown) { console.log('Staged:', s); }
 #### 1. Install the package
 
 ```bash
-npm install sautocomplete-suggestion
+npm install @nbhson43/s-autocomplete-suggestion
 ```
 
 #### 2. Copy the wrapper component
@@ -534,19 +534,24 @@ npm publish
 ## Project Structure
 
 ```
-sautocomplete-suggestion/
+@nbhson43/s-autocomplete-suggestion/
 ├── src/
 │   ├── index.ts          # Entry point, exports
 │   ├── types.ts          # TypeScript interfaces
 │   ├── core.ts           # Core vanilla logic (input, dropdown, staged, keyboard, history)
 │   ├── matching.ts       # Accent-insensitive grouped matching
-│   ├── matching.test.ts  # Unit tests for matching
 │   ├── sanitizer.ts      # HTML escaping (XSS protection)
-│   ├── sanitizer.test.ts # Unit tests for sanitizer
+│   ├── icons.ts          # SVG allowlist sanitizer (submitIcon / group icons)
 │   ├── highlight.ts      # Active word/entity highlight
-│   ├── default-data.ts   # Default sample dataset (English)
+│   ├── async.ts          # Debounce + QueryCache helpers (dataSource)
+│   ├── history.ts        # Memory + localStorage history adapters
+│   ├── store.ts          # Pure state helpers (group order, staged, form value)
+│   ├── form.ts           # Hidden input for native <form> integration
+│   ├── logger.ts         # Pluggable logger (noop / console / custom)
 │   ├── themes.ts         # Group badge color themes
-│   ├── core.test.ts      # Unit tests for core
+│   ├── virtualize.ts     # Windowing helper for large hit lists
+│   ├── default-data.ts   # Default sample dataset (English)
+│   ├── *.test.ts         # Unit tests (vitest + jsdom)
 │   ├── styles.css        # Component styles (light + dark mode)
 │   └── global.d.ts       # CSS module declaration
 ├── frameworks/
