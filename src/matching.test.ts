@@ -1,4 +1,4 @@
-import { removeAccents, matchesSearch, getGroupedMetadata, isItemInQuery } from './matching';
+import { removeAccents, matchesSearch, getGroupedMetadata, isItemInQuery, applySuggestion } from './matching';
 import { describe, it, expect } from 'vitest';
 import { DEFAULT_ITEMS } from './default-data';
 
@@ -55,5 +55,48 @@ describe('isItemInQuery', () => {
   it('detects item in comma list', () => {
     expect(isItemInQuery('React, Vue', 'Vue')).toBe(true);
     expect(isItemInQuery('React', 'Vue')).toBe(false);
+  });
+  it('matches at word start and end boundaries', () => {
+    expect(isItemInQuery('Vue is fast', 'Vue')).toBe(true);
+    expect(isItemInQuery('I like, Vue', 'Vue')).toBe(true);
+    // a bare "(" before the word is not a recognized boundary (documented behavior)
+    expect(isItemInQuery('I like (Vue)', 'Vue')).toBe(false);
+    expect(isItemInQuery('avue', 'Vue')).toBe(false);
+  });
+});
+
+describe('matchesSearch extras', () => {
+  it('multi-token queries require every token', () => {
+    expect(matchesSearch('Dune Part Two', 'dune two')).toBe(true);
+    expect(matchesSearch('Dune Part Two', 'dune three')).toBe(false);
+  });
+
+  it('phoneticHints match alternative spellings', () => {
+    const hints: Array<[string, string[]]> = [['phong', ['hong', 'chong']]];
+    expect(matchesSearch('Phòng', 'phong', { phoneticHints: hints })).toBe(true);
+    expect(matchesSearch('Hong Kong', 'phong', { phoneticHints: hints })).toBe(true);
+    expect(matchesSearch('Kyoto', 'phong', { phoneticHints: hints })).toBe(false);
+  });
+});
+
+describe('applySuggestion', () => {
+  it('replaces the last word when it is a prefix of the suggestion', () => {
+    expect(applySuggestion('typ', 'TypeScript')).toBe('TypeScript');
+    expect(applySuggestion('learn typ', 'TypeScript')).toBe('learn TypeScript');
+  });
+
+  it('appends with a space when the last word is unrelated', () => {
+    expect(applySuggestion('hello', 'React')).toBe('hello React');
+  });
+
+  it('appends directly after a trailing space', () => {
+    expect(applySuggestion('hello ', 'React')).toBe('hello React');
+    expect(applySuggestion('', 'React')).toBe('React');
+  });
+
+  it('strips trailing commas and trims the result', () => {
+    expect(applySuggestion('react,', 'Vue')).toBe('react, Vue');
+    // a standalone "," is treated as an unrelated word (known quirk)
+    expect(applySuggestion('react ,', 'TypeScript')).toBe('react , TypeScript');
   });
 });
