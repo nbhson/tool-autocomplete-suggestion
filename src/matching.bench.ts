@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest';
+import { describe, test } from 'vitest';
 import { getGroupedMetadata } from './matching';
 import type { SuggestionItem } from './types';
 
@@ -9,7 +9,9 @@ const big: SuggestionItem[] = Array.from({ length: 20_000 }, (_, i) => ({
 }));
 
 describe('matching perf', () => {
-  bench('getGroupedMetadata over 20k items', () => {
-    getGroupedMetadata(big, 'typescript');
+  test('getGroupedMetadata over 20k items', async ({ bench }) => {
+    await bench('getGroupedMetadata', () => {
+      getGroupedMetadata(big, 'typescript');
+    }).run();
   });
 });
