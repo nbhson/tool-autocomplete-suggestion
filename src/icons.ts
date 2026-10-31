@@ -43,10 +43,6 @@ function sanitizeAttrValue(v: string): string {
 /** Strip disallowed tags/attrs; returns '' when nothing safe remains. */
 export function sanitizeSvgMarkup(markup: string): string {
   if (!markup || typeof markup !== 'string') return '';
-  // Fast reject: event-handler attributes or script tags anywhere
-  if (/\son\w+\s*=/i.test(markup)) {
-    // continue with filtering instead of hard reject — strip them below
-  }
   try {
     const doc =
       typeof DOMParser !== 'undefined'
