@@ -484,7 +484,12 @@ export function createAutocomplete<T = unknown>(options: AutocompleteOptions<T>)
       if (myId !== requestId) return;
       const aborted =
         (err as { name?: string })?.name === 'AbortError' || (signal?.aborted ?? false);
-      if (aborted) return;
+      if (aborted) {
+        // Request bị huỷ khi vẫn là request mới nhất: không được treo loading vĩnh viễn.
+        asyncLoading = false;
+        render();
+        return;
+      }
       asyncLoading = false;
       asyncError = err;
       reportError(err);
