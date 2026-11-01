@@ -37,6 +37,9 @@ All UI strings are in **English** by default and overridable via `locale`.
 - [Custom Color & Submit Icon](#custom-color--submit-icon)
 - [Locale (English by default)](#locale-english-by-default)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Accessibility (ARIA combobox)](#accessibility-aria-combobox)
+- [Async data source states](#async-data-source-states)
+- [Known quirks](#known-quirks)
 - [How It Works (staged flow)](#how-it-works-staged-flow)
 - [Bundle Sizes](#bundle-sizes)
 - [Framework Integration](#framework-integration)
@@ -169,6 +172,7 @@ Creates a new autocomplete instance. Returns an `AutocompleteInstance`.
 | `showStatusBar` | `boolean` | `true` | Status bar: scope, hits, replacing pill, staged pill, keyboard hints, Apply button |
 | `virtualizeThreshold` | `number` | `200` | Render cap for large hit lists (`0` = off) |
 | `historyAdapter` | `HistoryAdapter` | memory | Pluggable history persistence (`createLocalStorageHistory()` available) |
+| `historyKey` | `string` | `'sautocomplete:history'` | Storage key used by `createLocalStorageHistory()` |
 | `name` | `string` | — | Native form integration (renders a hidden input) |
 | `formJoin` | `string` | `', '` | Separator for the hidden form value |
 | `tokens` | `DesignTokens` | — | Theme/density/direction/fonts/surfaces/shadow + `cssVars` escape hatch |
@@ -380,6 +384,36 @@ createAutocomplete({
 | `Enter` (chip focused) | Apply single chip into the input (does **not** submit) |
 | `Enter` (on input) | Submit query |
 | `Esc` | Clear chip focus → clear staged → close dropdown |
+
+## Accessibility (ARIA combobox)
+
+The component implements the [WAI-ARIA 1.2 combobox pattern](https://www.w3.org/WAI/ARIA/apg/patterns/combobox/) with no extra setup:
+
+- The input carries `role="combobox"`, `aria-expanded`, `aria-controls` (points at the listbox), `aria-autocomplete="list"` and an `aria-label`.
+- The dropdown is `role="listbox"`; every chip is `role="option"` with a stable id (`<uid>-opt-<n>`) and `aria-selected` reflecting staged/in-query state. Disabled chips expose `aria-disabled="true"` and are not focusable.
+- Keyboard focus stays on the input while navigating chips (virtual focus): the focused option id is exposed through `aria-activedescendant` and cleared when the dropdown closes or focus is dropped (`Esc`).
+- Group headers use `role="group"` + `aria-label`; the status bar and loading indicator are `role="status"` (`aria-live="polite"`); async failures render `role="alert"` with a `Retry` button.
+- Screen-reader announcements: result counts (`"N hits in M groups"`), recent-search count, loading, errors and the empty state are pushed to a visually hidden live region (`.sa-sr`).
+
+Both the unit suite (`src/a11y.test.ts`) and an E2E suite (`e2e/a11y.spec.ts`) verify these attributes, including `aria-activedescendant` updates across `Tab`/arrow navigation and cleanup on close.
+
+## Async data source states
+
+When `dataSource` is set, the dropdown renders explicit states for each phase:
+
+| State | UI | Live announcement |
+|---|---|---|
+| Loading | Spinner + `locale.loading` | `role="status"` announce |
+| Error | `locale.loadError` + `Retry` button | `role="alert"` announce |
+| Empty result | `locale.empty` message | `role="status"` announce |
+| Results | Grouped chips + hits status | `"N hits in M groups"` |
+
+`instance.isLoading()` mirrors the in-flight flag, so hosts can drive external spinners/skeletons.
+
+## Known quirks
+
+- **Standalone `,` in `applySuggestion`** — the word-replacement logic strips trailing commas from the *last* word (`'react,'` + `Vue` → `'react, Vue'`), but a comma surrounded by spaces is treated as an unrelated token: `'react ,'` + `TypeScript` → `'react , TypeScript'` (kept as-is, only a trailing `,\s*` is trimmed). Fixing it would normalise `', '` spacing and change existing outputs, so it is documented rather than "corrected". Mid-word punctuation (`;` `:`) follows the same rule.
+- `applySuggestion` replaces the last word when it is a *prefix* of the suggestion (case-insensitive) — typing `typ` and picking `TypeScript` yields `TypeScript`, not `typ TypeScript`.
 
 ## How It Works (staged flow)
 

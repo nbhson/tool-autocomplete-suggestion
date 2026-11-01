@@ -2,6 +2,31 @@
 
 All notable changes are documented here. Releases follow [Conventional Commits](https://www.conventionalcommits.org/) + semantic-release.
 
+## [Unreleased]
+
+### Fixed
+- **core**: async request bị huỷ (AbortError) khi vẫn là request mới nhất không còn
+  treo `isLoading() === true` vĩnh viễn — cờ `asyncLoading` được reset và UI re-render.
+
+### Added
+- **a11y**: bộ test xác minh đầy đủ pattern ARIA combobox (WAI-ARIA 1.2) —
+  `aria-expanded/aria-controls/aria-autocomplete`, `role=option` + `aria-selected`,
+  `aria-activedescendant` khi điều hướng bàn phím (virtual focus, không roving tabindex),
+  live region `role=status`, lỗi `role=alert`. Unit (`src/a11y.test.ts`) + E2E (`e2e/a11y.spec.ts`).
+- **test**: coverage gate nâng lên `95/95/85/95` (lines/statements/branches/functions)
+  từ `80/80/75/80`. Toàn bộ nhánh async load, virtualize scroll, historyAdapter,
+  sự kiện DOM và edge case của `core.ts` (99.7% lines) + `icons.ts` (fallbackStrip
+  không DOMParser) đều có test.
+- **ci**: chạy `test:coverage` (coverage gate) trong job lint-unit-build.
+- **docs**: README bổ sung mục *Accessibility (ARIA combobox)*, *Async data source
+  states* (loading/error/empty + `isLoading()`), *Known quirks* (hành vi dấu `,`
+  trong `applySuggestion`) và option `historyKey` trong bảng API.
+
+### Known quirks (documented, không đổi hành vi)
+- `applySuggestion('react ,', 'TypeScript')` → `'react , TypeScript'`: dấu phẩy
+  standalone được coi là từ riêng biệt; chỉ dấu phẩy cuối chuỗi (không có dấu cách
+  phía trước) được dọn. Xem README mục *Known quirks*.
+
 ## [1.2.1]
 
 ### Fixed
