@@ -1,6 +1,6 @@
 {
   "name": "@nbhson43/s-autocomplete-suggestion",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "A lightweight, dependency-free grouped autocomplete suggestion input (Vanilla TS). Sync + async dataSource, virtualized, sanitized, form-ready. Framework-agnostic with React, Vue and Angular wrappers.",
   "main": "dist/sautocomplete-suggestion.umd.js",
   "module": "dist/sautocomplete-suggestion.esm.js",
@@ -40,6 +40,14 @@
     "size": "node scripts/check-size.mjs",
     "demo": "open demo/index.html",
     "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nbhson/tool-autocomplete-suggestion.git"
+  },
+  "homepage": "https://github.com/nbhson/tool-autocomplete-suggestion#readme",
+  "bugs": {
+    "url": "https://github.com/nbhson/tool-autocomplete-suggestion/issues"
   },
   "keywords": [
     "autocomplete",
