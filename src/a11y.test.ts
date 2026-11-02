@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createAutocomplete } from './index';
+import type { SuggestionItem } from './types';
 
 /**
  * A11y pass — xác minh đúng pattern ARIA combobox (WAI-ARIA 1.2):
@@ -148,7 +149,7 @@ describe('a11y: ARIA combobox pattern', () => {
       container: '#host',
       items: [],
       debounceMs: 0,
-      dataSource: () => new Promise(() => {}), // treo vĩnh viễn → loading
+      dataSource: (): Promise<SuggestionItem<unknown>[]> => new Promise(() => {}), // treo vĩnh viễn → loading
     });
     inst2.setQuery('zz', { focus: false });
     const loading = document.querySelector('.sa-loading') as HTMLElement;
